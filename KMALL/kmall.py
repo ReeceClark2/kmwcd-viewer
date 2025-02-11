@@ -183,6 +183,25 @@ class kmall():
             print('Unable to find {} in file'.format(datagram_identifier))
         return self.datagram_data
 
+    # index_row should be a row from the Index
+    def read_index_row( self, index_row, header_only=False, rewind=False ):
+        if self.FID is None:
+            self.OpenFiletoRead()
+
+        current_pos = self.FID.tell()
+
+        self.FID.seek(index_row.ByteOffset,0)
+
+        self.decode_datagram()
+
+        if not header_only:
+            self.read_datagram()
+
+        if rewind:
+            self.FID.seek(current_pos,0)
+
+        return self.datagram_data
+
     ###########################################################
     # Reading datagrams
     ###########################################################
