@@ -184,7 +184,7 @@ class kmall():
         return self.datagram_data
 
     # index_row should be a row from the Index
-    def read_index_row( self, index_row, header_only=False, rewind=False ):
+    def read_index_row(self, index_row, header_only=False, rewind=False ):
         if self.FID is None:
             self.OpenFiletoRead()
 

@@ -31,7 +31,7 @@ K.index_file()
 K.report_packet_types()
 
 # # Extract MWC messages and their count
-IMWC = K.Index["MessageType"] == "#MWC"
+IMWC = K.Index["MessageType"] == "b'#MWC'"
 MWCIndex = K.Index[IMWC]
 max_pings = len(MWCIndex)
 
@@ -39,7 +39,7 @@ last_dot_index = kmall_file.rfind('.')
 name_for = kmall_file[:last_dot_index]
 
 
-def pipeline(beamdata, dg):
+def pipeline(dg):
     print(dg["rxInfo"])
     # Extract necessary data from KMALL data structure
     beamAmp = pd.DataFrame.from_dict(dg['beamData']['sampleAmplitude05dB_p'])
@@ -94,14 +94,12 @@ def pipeline(beamdata, dg):
 
 
 def pingSingle(ping):
+    print(MWCIndex)
     dg = lambda ping: K.read_index_row(MWCIndex.iloc[ping])
 
     df = dg(ping)
 
-    if df["header"]["dgmType"] == b"#MWC":
-        beamdata = pd.DataFrame.from_dict(df["beamData"])
-
-    Sv1, ya1, za1 = pipeline(beamdata, df)
+    Sv1, ya1, za1 = pipeline(df)
 
     return Sv1, ya1, za1
 

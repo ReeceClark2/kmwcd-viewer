@@ -33,7 +33,7 @@ K.index_file()
 K.report_packet_types()
 
 # # Extract MWC messages and their count
-IMWC = K.Index["MessageType"] == "#MWC"
+IMWC = K.Index["MessageType"] == "b'#MWC'"
 MWCIndex = K.Index[IMWC]
 max_pings = len(MWCIndex)
 
@@ -45,7 +45,8 @@ warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=mpl.MatplotlibDeprecationWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-def pipeline(beamdata, dg):
+def pipeline(dg):
+    print(dg["rxInfo"])
     # Extract necessary data from KMALL data structure
     beamAmp = pd.DataFrame.from_dict(dg['beamData']['sampleAmplitude05dB_p'])
     numsamp = dg['beamData']['numSampleData']
@@ -54,7 +55,7 @@ def pipeline(beamdata, dg):
     TVGFuncApplied = dg["rxInfo"]["TVGfunctionApplied"]
     TVGOffset = dg["rxInfo"]["TVGoffset_dB"]
     txBeamWidth = dg['sectorData']['txBeamWidthAlong_deg']
-    beamAngle = np.array(beamdata["beamPointAngReVertical_deg"])
+    beamAngle = np.array(dg['beamData']['beamPointAngReVertical_deg'])
 
     length = np.arange(1, len(beamAmp.columns)).tolist()
     rang = [x * .5 * SoundSp / SampleFreq for x in length]
@@ -91,13 +92,9 @@ def pipeline(beamdata, dg):
 
 def pingSingle(ping):
     dg = lambda ping: K.read_index_row(MWCIndex.iloc[ping-1])
-
     df = dg(ping)
 
-    if df["header"]["dgmType"] == b"#MWC":
-        beamdata = pd.DataFrame.from_dict(df["beamData"])
-
-    Sv1, ya1, za1 = pipeline(beamdata, df)
+    Sv1, ya1, za1 = pipeline(df)
 
     return Sv1, ya1, za1
 
@@ -113,12 +110,10 @@ def pingAvg(startPing, endPing):
 
     for ind, i in enumerate(range(startPing, endPing + 1)):
         dg = lambda ping: K.read_index_row(MWCIndex.iloc[i-1])
+        print(ind, i)
         df = dg(i)
 
-        if df["header"]["dgmType"] == b"#MWC":
-            beamdata = pd.DataFrame.from_dict(df["beamData"])
-
-        Sv1, ya1, za1 = pipeline(beamdata, df)
+        Sv1, ya1, za1 = pipeline(df)
 
         Sv_list[ind] = Sv1
         ya_list[ind] = ya1
@@ -152,7 +147,7 @@ def main():
 
     # Start of new plotting
     # Create a figure
-    fig = plt.figure(figsize=(20, 5))
+    fig = plt.figure(figsize=(10, 5))
 
     # Create a GridSpec object with 1 row and 4 columns
     gs = gridspec.GridSpec(1, 2, width_ratios=[2, 1])
@@ -174,6 +169,13 @@ def main():
     # pcolor_plot = axs[0].pcolor(mean_ya.iloc[:a_initial, :b_initial], mean_za.iloc[:a_initial, :b_initial], mean_Sv.iloc[:a_initial, :b_initial], vmin=-120, vmax=-30, cmap='viridis')
     cbar = fig.colorbar(pcolor_plot, ax=axs[0])
     cbar.set_label('Decibels', rotation=270)
+    print(mean_ya,mean_za)
+    
+    ya1_min, ya1_max = mean_ya.min().min(), mean_ya.max().max()
+    za1_min, za1_max = mean_za.min().min(), mean_za.max().max()
+    
+    axs[0].set_xlim(ya1_min, ya1_max)
+    axs[0].set_ylim(za1_min, za1_max)
     axs[0].set_title(f'Data for Pings {1}:{c_initial}')
     axs[0].set_ylabel('Depth from Surface [m]')
     axs[0].set_xlabel('Distance [m]')
@@ -281,7 +283,7 @@ def main():
         K.report_packet_types()
 
         # Extract MWC messages and their count
-        IMWC = K.Index["MessageType"] == "#MWC"
+        IMWC = K.Index["MessageType"] == "b'#MWC'"
         MWCIndex = K.Index[IMWC]
         max_pings = len(MWCIndex)
 
