@@ -234,7 +234,7 @@ class kmall():
         # UTC time in seconds + Nano seconds remainder. Epoch 1970-01-01.
         dg['dgtime'] = fields[5] + fields[6] / 1.0E9
         dg['dgdatetime'] = datetime.datetime.fromtimestamp(dg['dgtime'],
-                                                              tz=datetime.UTC)
+                                                              tz=datetime.timezone.utc)
 
         if self.verbose > 2:
             self.print_datagram(dg)
@@ -1308,7 +1308,7 @@ class kmall():
         dg['timeFromSensor_nanosec'] = fields[1]
         dg['datetime'] = datetime.datetime.fromtimestamp(dg['timeFromSensor_sec']
                                                             + dg['timeFromSensor_nanosec'] / 1.0E9,
-                                                            tz=datetime.UTC)
+                                                            tz=datetime.timezone.utc)
         # Only if available as input from sensor. Calculation according to format.
         dg['posFixQuality_m'] = fields[2]
 
@@ -1462,7 +1462,7 @@ class kmall():
         dg['time_sec'] = fields[0]
         dg['time_nanosec'] = fields[1]
         dg['datetime'] = datetime.datetime.fromtimestamp(dg['time_sec'] + dg['time_nanosec'] / 1.0E9,
-                                                         tz=datetime.UTC)
+                                                         tz=datetime.timezone.utc)
         # Delayed heave. Unit meter.
         dg['delayedHeave_m'] = fields[2]
 
@@ -1501,7 +1501,7 @@ class kmall():
         # If time is unavailable from attitude sensor input, time of reception on serial port is added to this field.
         dg['time_nanosec'] = fields[3]
         dg['dgtime'] = dg['time_sec'] + dg['time_nanosec'] / 1.0E9
-        dg['datetime'] = datetime.datetime.fromtimestamp(dg['dgtime'],tz=datetime.UTC)
+        dg['datetime'] = datetime.datetime.fromtimestamp(dg['dgtime'],tz=datetime.timezone.utc)
         # Bit pattern for indicating validity of sensor data, and reduced performance.
         # The status word consists of 32 single bit flags numbered from 0 to 31, where 0 is the least significant bit.
         # Bit number 0-7 indicate if from a sensor data is invalid: 0 = valid data, 1 = invalid data.
@@ -1688,7 +1688,7 @@ class kmall():
         # Time extracted from the Sound Velocity Profile. Parameter is set to zero if not found.
         dg['time_sec'] = fields[3]
         dg['datetime'] = datetime.datetime.fromtimestamp(dg['time_sec'],
-                                                         tz=datetime.UTC)
+                                                         tz=datetime.timezone.utc)
 
         format_to_unpack = "2d"
         fields = struct.unpack(format_to_unpack, self.FID.read(struct.Struct(format_to_unpack).size))
@@ -1796,7 +1796,7 @@ class kmall():
         # Nano seconds remainder. time_nanosec part to be added to time_sec for more exact time.
         dg['time_nanosec'] = fields[1]
         dg['datetime'] = datetime.datetime.fromtimestamp(dg['time_sec'] + dg['time_nanosec'] / 1.0E9,
-                                                            tz=datetime.UTC)
+                                                            tz=datetime.timezone.utc)
         # Measured sound velocity from sound velocity probe. Unit m/s.
         dg['soundVelocity_mPerSec'] = fields[2]
         # Water temperature from sound velocity probe. Unit Celsius.
@@ -2015,7 +2015,7 @@ class kmall():
         dg['timeFromSensor_nanosec'] = fields[1]
         dg['datetime'] = datetime.datetime.fromtimestamp(dg['timeFromSensor_sec']
                                                             + dg['timeFromSensor_nanosec'] / 1.0E9,
-                                                            tz=datetime.UTC)
+                                                            tz=datetime.timezone.utc)
         dg['posFixQuality'] = fields[2]
         dg['correctedLat_deg'] = fields[3]
         dg['correctedLong_deg'] = fields[4]
@@ -4450,7 +4450,11 @@ def main(args=None):
     parser.add_argument('-i', action='store_true', dest='extractpinginfo',
                         default=False, help=("Extract all pinginfo records from a file to stdout."))
     parser.add_argument("-ii", action="store", dest="extractpinginfo_ii", type=float,
-                        default=None, help="-ii <interval> Extracts pinginfo at <interval> seconds.")                    
+                        default=None, help="-ii <interval> Extracts pinginfo at <interval> seconds.")   
+    parser.add_argument('-D', action='store', type=int, dest='decimationInterval',
+                        default=1, help=("Set the decimation level where 1=write every other ping (Default 1).\n" +
+                                         "\t The output file is written in the executed directory appended with Dd,\n" +
+                                         "\t where D is the specified decimation level."))                 
     parser.add_argument('-v', action='count', dest='verbose', default=0,
                         help="Increasingly verbose output (e.g. -v -vv -vvv),"
                              "for debugging use -vvv")
@@ -4469,6 +4473,10 @@ def main(args=None):
     extractpinginfo = args.extractpinginfo
     extractpinginfo_ii = args.extractpinginfo_ii
     extractsensorposition = args.extractsensorposition
+    decimationInterval = args.decimationInterval
+
+    if decimationInterval is not None:
+        decimate = True
 
     runtimeData = []
     pinginfo = None
@@ -4686,6 +4694,36 @@ def main(args=None):
             T.closeFile()
             K.closeFile()
 
+        ## Decimate the ping data by a desired factor.
+        if decimate:
+
+
+            print("Decimating soundings and imagery.")
+    
+            decimatedFilename = K.filename + ".%dd" % decimationInterval
+
+            T = kmall(decimatedFilename)
+            T.OpenFiletoWrite()
+            K.index_file()
+
+            msgCnt = 0
+            for offset, size, mtype in zip(K.Index['ByteOffset'],
+                                               K.Index['MessageSize'],
+                                               K.Index['MessageType']):
+                msgCnt+=1
+                K.FID.seek(offset, 0)
+
+                if mtype == "b'#MRZ'":
+                    if np.mod(msgCnt, decimationInterval+1) == 0:
+                        dg = K.read_EMdgmMRZ()
+                        T.write_EMdgmMRZ(dg)
+                else:
+                    buffer = K.FID.read(size)
+                    T.FID.write(buffer)
+
+            K.closeFile()
+            T.closeFile()
+
         ## Extract Runtime Parameters from the file.
         if runtimeparams:
             runtimeData.append(K.extractRuntimeParameters())
@@ -4697,13 +4735,17 @@ def main(args=None):
             pinginfo = K.extractPingInfo(interval=extractpinginfo_ii) 
             
         if pinginfo is not None:
-            pinginfo.to_csv('PingInfo_' + os.path.basename(K.filename[:-6]) + '.csv')
+            pinginfo.to_csv('PingInfo_' + 
+                            os.path.dirname(K.filename).replace('../','').replace('./','').replace('/','_') + 
+                            '_' + os.path.basename(K.filename[:-6]) + '.csv')
 
         if extractsensorposition == True:
             sensorData = K.extractSensorPosition()
             
         if sensorData is not None:
-            sensorData.to_csv('SensorPosition_' + os.path.basename(K.filename[:-6]) + '.csv') 
+            sensorData.to_csv('SensorPosition_' + 
+                              os.path.dirname(K.filename).replace('../','').replace('./','').replace('/','_') + 
+                              '_' + os.path.basename(K.filename[:-6]) + '.csv')
 
         ###########################################################################
         # End file processing loop
