@@ -1,4 +1,12 @@
-﻿# Kongsberg "KMALL" file reader
+ # KMWCD Data Viewer
+
+ Using the Kongsberg "KMALL" file reader, detailed below, a viewer has been developed to display water column data from EM2040 sonar devices. The viewer allows for easy access to  animate and observe plumes from hydrothermal vents along with other water column features causing a temperature gradient.
+
+ The viewer's main window includes a lower panel with three sliders. These allow data to be restricted by beam number, depth, and ping number. The right panel includes the ability to upload a new file or folder as well as buttons for animation. The buttons for animations specify the pings that wished to be stitched together and the number of pings to be averaged per frame. If a folder is uploaded, then there is an option to animate all .kmwcd files within the folder.
+
+ The viewer aims to provide users with a lightweight local viewer. This repository is open source and available to be cloned to any machine. The viewer can be run locally via this repository or installed as an executable here.
+ 
+ # Kongsberg "KMALL" file reader
 
 Modern Kongsberg bathymetric sonar systems, which acquire data using "Seafloor Inforation System - Version 5" produce data files in the ".kmall" data format. This module (class) and utility reads these data formats and provides several tools for reporting information about the data within the file.
 
