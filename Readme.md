@@ -1,82 +1,115 @@
- # KMWCD Data Viewer
+# KMWCD Data Viewer
 
- Using the Kongsberg "KMALL" file reader, detailed below, a viewer has been developed to display water column data from EM2040 sonar devices. The viewer allows for easy access to  animate and observe plumes from hydrothermal vents along with other water column features causing a temperature gradient.
+This repository presents a lightweight, local data viewer designed to visualize water column data from EM2040 sonar devices, specifically utilizing the Kongsberg "KMALL" file format. Building upon the existing [KMALL file reader](https://github.com/valschmidt/kmall), this tool provides an interface for exploring and analyzing hydrothermal plumes and other water column features that exhibit temperature gradients.
 
- The viewer's main window includes a lower panel with three sliders. These allow data to be restricted by beam number, depth, and ping number. The right panel includes the ability to upload a new file or folder as well as buttons for animation. The buttons for animations specify the pings that wished to be stitched together and the number of pings to be averaged per frame. If a folder is uploaded, then there is an option to animate all .kmwcd files within the folder.
+## Features
 
- The viewer aims to provide users with a lightweight local viewer. This repository is open source and available to be cloned to any machine. The viewer can be run locally via this repository or installed as an executable here.
- 
- # Kongsberg "KMALL" file reader
+The KMWCD Data Viewer offers a range of functionalities to guide the user through exploring data:
 
-Modern Kongsberg bathymetric sonar systems, which acquire data using "Seafloor Inforation System - Version 5" produce data files in the ".kmall" data format. This module (class) and utility reads these data formats and provides several tools for reporting information about the data within the file.
+  * **Interactive 2D Visualization**: The main viewer window displays a 2D representation of the water column data. Users can dynamically adjust the displayed data using three sliders in the lower panel:
+      * **Depth**: Restrict the data by depth range.
+      * **Beams**: Filter data based on beam numbers.
+      * **Pings**: Select a specific range of pings to display.
+  * **Animation Generation**:
+      * Create **animations** of hydrothermal plumes by stitching together a sequence of pings. You can specify the number of pings per frame and the desired frames per second for the output GIF.
+      * Process multiple files at once: If a folder containing `.kmwcd` files is uploaded, the "Animate All" feature will generate individual animations for each file within that folder.
+  * **2D and 3D Model Creation**:
+      * Generate **2D and 3D models** that represent plume strength based on user-defined parameters for pings per gridpoint and beams per gridpoint. These models provide a comprehensive overview of the plume's characteristics across both beam and ping dimensions.
+      * Automate model creation: The "Create All Models" function processes all `.kmwcd` files within a selected folder, generating 2D and 3D models for each.
+  * **File Management**: Easily upload individual `.kmwcd` files or entire folders containing multiple data files directly within the viewer.
+  * **Image Export**: Save the current 2D map view as a high-resolution PNG image for reports or presentations.
 
-Although low-level readers for many of the datagram types is in place, little other infrastucture exists. This reader remains a work in progress. 
+The viewer's primary goal is to provide users with a user-friendly, lightweight, and local tool for quick data assessment and visualization.
 
-    ./kmall.py -h
-    usage: kmall.py [-h] [-f KMALL_FILENAME] [-d KMALL_DIRECTORY] [-V] [-z]
-                [-l COMPRESSIONLEVEL] [-Z] [-v]
+-----
 
-    A python script (and class) for parsing Kongsberg KMALL data files.
+## Getting Started
 
-    optional arguments:
-      -h, --help           show this help message and exit
-      -f KMALL_FILENAME    The path and filename to parse.
-      -d KMALL_DIRECTORY   A directory containing kmall data files to parse.
-      -V                   Perform series of checks to verify the kmall file.
-      -z                   Create a compressed (somewhat lossy) version of the
-                           file. See -l
-      -l COMPRESSIONLEVEL  Set the compression level (Default: 0). 0: Somewhat
-                           lossy compression of soundings and imagery
-                           data.(Default) 1: Somewhat lossy compression of
-                           soundings with imagery omitted.
-      -Z                   Decompress a file compressed with this library. Files
-                           must end in .Lz, where L is an integer indicating the
-                           compression level (set by -l when compresssing)
-      -v                   Increasingly verbose output (e.g. -v -vv -vvv),for
-                           debugging use -vvv    
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-See [the examples](KMALL_examples.rst) for details about using the module.
+### Prerequisites
 
-## Coordinate systems
+Before you begin, ensure you have the following installed:
 
-### Vessel Coordinate System (VCS)
+  * **Python 3.x**: You can download Python from [python.org](https://www.python.org/downloads/).
+  * **Git**: For cloning the repository. You can download Git from [git-scm.com](https://git-scm.com/downloads).
 
-Origo of the VCS is the vessel reference point. The VCS is defined according to the right hand rule.
+### Installation
 
-    x-axis pointing forward parallel to the vessel main axis.
-    y-axis pointing starboard parallel to the deck plane.
-    z-axis pointing down parallel to the mast.
+1.  **Clone the repository:**
 
-Rotation of the vessel coordinate system around an axis is defined as positive in the clockwise direction, also according to the right hand rule.
+    Open your terminal or command prompt and run the following command inside your root directory:
 
-    Roll - rotation around the x-axis. (positive when starboard is down)
-    Pitch - rotation around the y-axis. (positive when bow is up)
-    Heading - rotation around the z-axis. Heading as input in depth calculations is sensor data referred to true north. (positive is clockwise when looking down, like traditional heading)
+    ```bash
+    git clone https://github.com/ReeceClark2/kmwcd-viewer
+    ```
 
-### Array Coordinate System (ACS)
+2.  **Navigate to the repository directory:**
 
-Origo of the ACS is at the centre of the array face. The ACS is defined according to the right hand rule.
+    ```bash
+    cd kmwcd-viewer
+    ```
 
-    x-axis pointing forward along the array (parallel to the vessel main axis).
-    y-axis pointing starboard along the array plane.
-    z-axis pointing down orthogonal to the array plane.
+3.  **Install the required dependencies:**
 
-### Surface Coordinate System (SCS)
+    This project uses several Python libraries. You can install them using `pip`:
 
-Origo of the SCS is the vessel reference point at the time of transmission. The SCS is defined according to the right hand rule.
+    ```bash
+    pip install numpy pandas matplotlib scipy tqdm Pillow
+    ```
 
-    x-axis pointing forward along the horizontal projection of the vessel main axis.
-    y-axis pointing horizontally to starboard, orthogonal to the horizontal projection of the vessel main axis.
-    z-axis pointing down along the g-vector.
+    *Note: The `KMALL` library is a core dependency and is assumed to be handled by the original repository. Ensure it's correctly set up as per the instructions in the [valschmidt/kmall](https://github.com/valschmidt/kmall) repository.*
 
-To move SCS into the waterline, use reference point height corrected for roll and pitch at the time of transmission.
+### Running the Viewer
 
-### Fixed Coordinate System (FCS)
+Once the dependencies are installed, you can run the data viewer by executing the main Python script inside your root directory:
 
-Origo of the FCS is fixed somewhere in the nominal sea surface. The FCS is defined according to the right hand rule.
+```bash
+python KMWCD_FUNC_STRUCT.py
+```
 
-    x-axis pointing north.
-    y-axis pointing east.
-    z-axis pointing down along the g-vector.
+The viewer will open a graphical interface, allowing you to load `.kmwcd` files and folders and interact with your data.
 
-> Written with [StackEdit](https://stackedit.io/).
+-----
+
+## Usage
+
+Upon launching the application, a window will appear displaying a 2D plot of the water column data.
+
+  * **Loading Data**: Use the **"File Upload"** button on the right panel to select a single `.kmwcd` file, or the **"Folder Upload"** button to load all `.kmwcd` files from a directory.
+  * **Adjusting Display**:
+      * The **"Depth"**, **"Beams"**, and **"Pings"** sliders at the bottom of the window control the range of data displayed in the 2D plot.
+      * Alternatively, you can manually enter specific ranges into the corresponding text boxes next to the sliders.
+      * Click **"Run"** to apply changes from the sliders or text boxes.
+  * **Creating Animations**:
+      * Enter the desired **"pings per frame"** and **"frames per second"** in the "Animation" section on the right.
+      * Click **"Animate"** to generate a GIF animation of the currently loaded data.
+      * Click **"Animate All"** (after loading a folder) to create animations for all `.kmwcd` files in the selected folder.
+  * **Generating Models**:
+      * In the "Modeling" section, specify the **"pings per gridpoint"** and **"beams per gridpoint"**.
+      * Click **"Create Model"** to generate 2D and 3D plume strength models for the active data.
+      * Click **"Create All Models"** (after loading a folder) to generate models for all `.kmwcd` files in the selected folder.
+  * **Saving Plots**: Use the **"Save Map"** button to export the current 2D water column plot as an image.
+  * **Exiting**: Click the **"Quit"** button to close the application.
+
+-----
+
+## Contributing
+
+This repository is open source and available for cloning and collaboration. If you'd like to contribute, please feel free to fork the repository and submit pull requests.
+
+-----
+
+## Next Steps
+
+Ideally, if I had more time, I would like to refactor the code into a class structure. I started this at one point, but I have not been able to finish it. The current working viewer has many remnants from my earlier coding career. I would also like to add a 'Run All' button that runs the 'Animate All' and 'Model All'. I also would have liked to include some more graceful error handling as well.
+
+If there are any bugs or issues then please contact me! I can see if I can fix them or investigate what is going wrong.
+
+There is a known issue with select EM2040 data not loading properly or extremely slowly due to issues with the way the data was recorded.
+
+-----
+
+## Acknowledgments
+
+  * This project builds upon the valuable work of [valschmidt](https://github.com/valschmidt) and their [KMALL file reader](https://github.com/valschmidt/kmall).
