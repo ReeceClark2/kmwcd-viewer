@@ -388,15 +388,19 @@ def main():
                 if filename.endswith(".kmwcd"):  # Example file type filter, adjust as needed
                     n += 1
             for filename in os.listdir(folder):
-                if filename.endswith(".kmwcd"):  # Example file type filter, adjust as needed
-                    animated += 1
-                    file_path = os.path.join(folder, filename)  # Get full file path
-                    print(file_path)
-                    update_file(1, file_path)
+                try:
+                    if filename.endswith(".kmwcd"):
+                        animated += 1
+                        file_path = os.path.join(folder, filename)  # Get full file path
+                        print(file_path)
+                        update_file(1, file_path)
 
-                    # fig.canvas.draw_idle() 
-                    print(f"Creating animation {animated} of {n}")
-                    create_animation(1) 
+                        # fig.canvas.draw_idle() 
+                        print(f"Creating animation {animated} of {n}")
+                        create_animation(1) 
+                except:
+                    print(f"File {animated} failed to animate. Moving to next file.")
+                    continue
             end = time.time()
             print(f"Animations completed in {end-start} seconds")
         except:
@@ -474,18 +478,22 @@ def main():
             n = len(kmwcd_files)
 
             for i, filename in enumerate(kmwcd_files, 1):
-                file_path = os.path.join(folder, filename)
-                print(f"[{i}/{n}] Creating model for: {file_path}")
+                try:
+                    file_path = os.path.join(folder, filename)
+                    print(f"[{i}/{n}] Creating model for: {file_path}")
 
-                # Load data for this file
-                update_file(1, file_path)
+                    # Load data for this file
+                    update_file(1, file_path)
 
-                # Create subfolder for output
-                base_name = os.path.splitext(filename)[0]
-                output_path = os.path.join(folder)
-                os.makedirs(output_path, exist_ok=True)
+                    # Create subfolder for output
+                    base_name = os.path.splitext(filename)[0]
+                    output_path = os.path.join(folder)
+                    os.makedirs(output_path, exist_ok=True)
 
-                create_3d_model(output_path)
+                    create_3d_model(output_path)
+                except:
+                    print(f"File {i} failed to model. Moving to next file.")
+                    continue
 
             print(f"Models completed in {time.time() - start:.2f} seconds")
 
