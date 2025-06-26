@@ -1,16 +1,15 @@
 # KMWCD Data Viewer
 
-This repository presents a lightweight, local data viewer designed to visualize water column data from EM2040 sonar devices, specifically utilizing the Kongsberg "KMALL" file format. Building upon the existing [KMALL file reader](https://github.com/valschmidt/kmall), this tool provides an intuitive interface for exploring and analyzing hydrothermal plumes and other water column features that exhibit temperature gradients.
+This repository presents a lightweight, local data viewer designed to visualize water column data from EM2040 sonar devices, specifically utilizing the Kongsberg "KMALL" file format. Building upon the existing [KMALL file reader](https://github.com/valschmidt/kmall), this tool provides an interface for exploring and analyzing hydrothermal plumes and other water column features that exhibit temperature gradients.
 
 ## Features
 
-The KMWCD Data Viewer offers a range of functionalities to facilitate data exploration:
+The KMWCD Data Viewer offers a range of functionalities to guide the user through exploring data:
 
   * **Interactive 2D Visualization**: The main viewer window displays a 2D representation of the water column data. Users can dynamically adjust the displayed data using three sliders in the lower panel:
       * **Depth**: Restrict the data by depth range.
       * **Beams**: Filter data based on beam numbers.
       * **Pings**: Select a specific range of pings to display.
-  * **Data Aggregation**: The viewer allows for averaging data across a specified range of pings, providing a clearer, aggregated view of the water column.
   * **Animation Generation**:
       * Create **animations** of hydrothermal plumes by stitching together a sequence of pings. You can specify the number of pings per frame and the desired frames per second for the output GIF.
       * Process multiple files at once: If a folder containing `.kmwcd` files is uploaded, the "Animate All" feature will generate individual animations for each file within that folder.
@@ -39,18 +38,16 @@ Before you begin, ensure you have the following installed:
 
 1.  **Clone the repository:**
 
-    Open your terminal or command prompt and run the following command:
+    Open your terminal or command prompt and run the following command inside your root directory:
 
     ```bash
-    git clone https://github.com/your-username/your-repository-name.git
+    git clone https://github.com/ReeceClark2/kmwcd-viewer
     ```
-
-    (Replace `your-username/your-repository-name.git` with the actual path to your repository.)
 
 2.  **Navigate to the repository directory:**
 
     ```bash
-    cd your-repository-name
+    cd kmwcd-viewer
     ```
 
 3.  **Install the required dependencies:**
@@ -65,15 +62,13 @@ Before you begin, ensure you have the following installed:
 
 ### Running the Viewer
 
-Once the dependencies are installed, you can run the data viewer by executing the main Python script:
+Once the dependencies are installed, you can run the data viewer by executing the main Python script inside your root directory:
 
 ```bash
-python your_main_script_name.py
+python KMWCD_FUNC_STRUCT.py
 ```
 
-(Replace `your_main_script_name.py` with the actual name of your Python file, which appears to be the one containing the `main()` function.)
-
-The viewer will open a graphical interface, allowing you to load `.kmwcd` files and interact with your data.
+The viewer will open a graphical interface, allowing you to load `.kmwcd` files and folders and interact with your data.
 
 -----
 
@@ -105,10 +100,16 @@ This repository is open source and available for cloning and collaboration. If y
 
 -----
 
-## Acknowledgments
+## Next Steps
 
-  * This project builds upon the valuable work of [valschmidt](https://github.com/valschmidt) and their [KMALL file reader](https://github.com/valschmidt/kmall).
+Ideally, if I had more time, I would like to refactor the code into a class structure. I started this at one point, but I have not been able to finish it. The current working viewer has many remnants from my earlier coding career. I would also like to add a 'Run All' button that runs the 'Animate All' and 'Model All'. I also would have liked to include some more graceful error handling as well.
+
+If there are any bugs or issues then please contact me! I can see if I can fix them or investigate what is going wrong.
+
+There is a known issue with select EM2040 data not loading properly or extremely slowly due to issues with the way the data was recorded.
 
 -----
 
-Feel free to replace `your-username/your-repository-name.git` and `your_main_script_name.py` with the actual details of your project. You might also want to add a "License" section if you have a specific open-source license in mind.
+## Acknowledgments
+
+  * This project builds upon the valuable work of [valschmidt](https://github.com/valschmidt) and their [KMALL file reader](https://github.com/valschmidt/kmall).
