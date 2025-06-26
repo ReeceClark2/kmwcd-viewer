@@ -5,19 +5,15 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import RangeSlider, TextBox, Button
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
-from mpl_toolkits.mplot3d import Axes3D
 from scipy.optimize import curve_fit
-import subprocess
-from PIL import Image
 import KMALL
-import tkinter as tk
 from tkinter import filedialog
 from tqdm import tqdm
 import warnings
 import os
 import time
 import sys
-import threading
+
 
 # Set font family for plots
 plt.rcParams["font.family"] = "Times New Roman"
@@ -46,7 +42,7 @@ warnings.filterwarnings("ignore", category=mpl.MatplotlibDeprecationWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 def pipeline(dg):
-    print(dg["rxInfo"])
+    # print(dg["rxInfo"])
     # Extract necessary data from KMALL data structure
     beamAmp = pd.DataFrame.from_dict(dg['beamData']['sampleAmplitude05dB_p'])
     numsamp = dg['beamData']['numSampleData']
@@ -110,7 +106,7 @@ def pingAvg(startPing, endPing):
 
     for ind, i in enumerate(range(startPing, endPing + 1)):
         dg = lambda ping: K.read_index_row(MWCIndex.iloc[i-1])
-        print(ind, i)
+        # print(ind, i)
         df = dg(i)
 
         Sv1, ya1, za1 = pipeline(df)
@@ -150,15 +146,15 @@ def main():
     fig = plt.figure(figsize=(10, 5))
 
     # Create a GridSpec object with 1 row and 4 columns
-    gs = gridspec.GridSpec(1, 2, width_ratios=[2, 1])
+    gs = gridspec.GridSpec(1, 1, width_ratios=[1])
 
     # Add the first subplot that takes up half of the figure
     ax1 = fig.add_subplot(gs[0, 0])
 
     # Add the second and third subplots that each take up a quarter of the figure
-    ax2 = fig.add_subplot(gs[0, 1])
+    # ax2 = fig.add_subplot(gs[0, 1])
 
-    axs = [ax1,ax2]
+    axs = [ax1]
     plt.subplots_adjust(left=0.1, bottom=0.3, right=0.7, top=0.9, wspace=0.3)
     # End of new plotting
 
@@ -169,7 +165,7 @@ def main():
     # pcolor_plot = axs[0].pcolor(mean_ya.iloc[:a_initial, :b_initial], mean_za.iloc[:a_initial, :b_initial], mean_Sv.iloc[:a_initial, :b_initial], vmin=-120, vmax=-30, cmap='viridis')
     cbar = fig.colorbar(pcolor_plot, ax=axs[0])
     cbar.set_label('Decibels', rotation=270)
-    print(mean_ya,mean_za)
+    # print(mean_ya,mean_za)
     
     ya1_min, ya1_max = mean_ya.min().min(), mean_ya.max().max()
     za1_min, za1_max = mean_za.min().min(), mean_za.max().max()
@@ -191,11 +187,11 @@ def main():
         return popt
 
     y_fit = gauss(np.arange(1, len(radialMeans) + 1), *gauss_fit(np.arange(1, len(radialMeans) + 1), radialMeans))
-    gauss_fit_plot, = axs[1].plot(np.arange(1, len(radialMeans) + 1), y_fit, color='black')
-    gauss_scatter_plot = axs[1].scatter(np.arange(1, len(radialMeans) + 1), radialMeans, color='red', s=4, zorder=1)
-    axs[1].set_title('Reading per Beam')
-    axs[1].set_ylabel('Average Reading [m$^{-1}$]')
-    axs[1].set_xlabel('Beam #')
+    # gauss_fit_plot, = axs[1].plot(np.arange(1, len(radialMeans) + 1), y_fit, color='black')
+    # gauss_scatter_plot = axs[1].scatter(np.arange(1, len(radialMeans) + 1), radialMeans, color='red', s=4, zorder=1)
+    # axs[1].set_title('Reading per Beam')
+    # axs[1].set_ylabel('Average Reading [m$^{-1}$]')
+    # axs[1].set_xlabel('Beam #')
 
     prev_e = 0
     prev_f = 0
@@ -226,18 +222,11 @@ def main():
             x_data = np.arange(c, d)
             y_data = radialMeans[c:d]
 
-            y_fit = gauss(x_data, *gauss_fit(x_data, y_data))
-
-            gauss_fit_plot.set_xdata(x_data)
-            gauss_fit_plot.set_ydata(y_fit)
-
-            gauss_scatter_plot.set_offsets(np.column_stack((np.arange(c, d), radialMeans[c:d])))
-
             axs[0].relim()
             axs[0].autoscale_view()
 
-            axs[1].relim()
-            axs[1].autoscale_view()
+            # axs[1].relim()
+            # axs[1].autoscale_view()
 
             # plt.savefig('high_fidelity_plot.png', dpi=300, bbox_inches='tight')
 
@@ -260,7 +249,7 @@ def main():
         # Define the KMALL file path
 
         if file == None:
-            kmall_file = filedialog.askopenfilename(filetypes=[("KWMCD Files", "*.kmwcd")])
+            kmall_file = filedialog.askopenfilename(filetypes=[("KMWCD Files", "*.kmwcd")])
             last_dot_index = kmall_file.rfind('.')
             name_for = kmall_file[:last_dot_index]
             if kmall_file == '':
@@ -326,8 +315,6 @@ def main():
             folder_label.set_text("Selected folder: None")
 
 
-
-
     # Function to update sliders from text boxes
     def update_slider_from_textbox(event, slider):
         try:
@@ -391,8 +378,6 @@ def main():
         # print("Animation Completed")f
 
 
-        # plt.show()
-
     def create_all_animations(event):
         start = time.time()
         try:
@@ -419,10 +404,11 @@ def main():
 
 
     def create_3d_model(event):
+        save_path = os.getcwd()
         # Read input values
         a, b = map(int, slider_a.val)
-        n = int(textbox_f.text)  # pings per gridpoint
-        h = int(textbox_g.text)  # beams per gridpoint
+        n = int(textbox_f.text)
+        h = int(textbox_g.text)
 
         # Initialize progress bar
         pbar = tqdm(total=int(max_pings / n))
@@ -432,106 +418,79 @@ def main():
         radialMeans = compute_radial_means(Sv1, a, b)
         xvalues = np.arange(1, len(radialMeans) + 1)
 
-        # Initialize lists to store values
         allxvalues, allyvalues = [], []
         allfittedxvalues, allfittedyvalues = [], []
 
-        # Loop through frames
         for frame in range(int(max_pings / n)):
             Sv1, ya1, za1 = pingAvg(frame * n, frame * n + n)
             radialMeans = compute_radial_means(Sv1, a, b)
 
-            # Fit a polynomial of degree 10 to the data
             degree = 10
             coefficients = np.polyfit(xvalues, radialMeans, degree)
-
-            # Generate the fitted polynomial curve
-            x_fit = list(np.linspace(xvalues.min(), xvalues.max(), int(len(radialMeans)/h)))
+            x_fit = list(np.linspace(xvalues.min(), xvalues.max(), int(len(radialMeans) / h)))
             y_fit = list(np.polyval(coefficients, x_fit))
 
             allfittedxvalues.append(x_fit)
             allfittedyvalues.append(y_fit)
-
             allxvalues.append(xvalues)
             allyvalues.append(radialMeans)
-
             pbar.update(1)
 
         # Generate z data
-        l = 1
-        allzvalues = []
-        for i in allfittedxvalues:
-            allzvalues.append([l * n for _ in range(len(i))])
-            l += 1
-
-        # Convert lists to NumPy arrays
-        allzvalues = np.array(allzvalues)
-        allxvalues = np.array(allxvalues)
-        allyvalues = np.array(allyvalues)
-
-        # Animation setup
-        # anim_fig, anim_ax = plt.subplots()
-        # plt.subplots_adjust(left=0.10, bottom=0.10, right=0.95, top=0.90, wspace=0.0)
-
-        xmin, xmax = min(allxvalues[0]), max(allxvalues[0])
-        ymin, ymax = min(allyvalues[0]) - 2, max(allyvalues[-1]) + 2
-
-        # def update(frame):
-        #     anim_ax.clear()
-        #     if frame > 6:
-        #         for i in range(5):
-        #             anim_ax.scatter(allxvalues[frame - i], allyvalues[frame - i], alpha=1 - (0.18 * i), color='red')
-        #             anim_ax.scatter(allfittedxvalues[frame - i], allfittedyvalues[frame - i], alpha=1 - (0.18 * i), color='blue')
-        #     else:
-        #         for i in range(frame - 1):
-        #             anim_ax.scatter(allxvalues[frame - i], allyvalues[frame - i], alpha=1 - (0.18 * i), color='red')
-        #             anim_ax.scatter(allfittedxvalues[frame - i], allfittedyvalues[frame - i], alpha=1 - (0.18 * i), color='blue')
-
-        #     anim_ax.scatter(allxvalues[frame], allyvalues[frame], color='red')
-        #     anim_ax.scatter(allfittedxvalues[frame], allfittedyvalues[frame], color='blue')
-        #     anim_ax.plot(allfittedxvalues[frame], allfittedyvalues[frame], color='black')
-        #     anim_ax.legend()
-        #     anim_ax.set_xlim(xmin, xmax)
-        #     anim_ax.set_ylim(ymin, ymax)
-        #     return []
-
-        # Uncomment the following lines to create and save the animation
-        # ani = animation.FuncAnimation(anim_fig, update, frames=int(max_pings / n), interval=300, repeat=True)
-        # ani.save('test_scatterplot.gif', writer='imagemagick', fps=4)
-
-        # Create a figure and an axes for 3D plot
-        fig2 = plt.figure(figsize=(8, 6))
-        ax3 = fig2.add_subplot(111, projection='3d')
-
-        # Create a figure and an axes for 3D plot
-        fig3 = plt.figure(figsize=(8, 6))
-        ax4 = fig3.add_subplot()
-
-        # Convert lists to NumPy arrays for 3D plot
+        allzvalues = np.array([[i * n] * len(row) for i, row in enumerate(allfittedxvalues)])
         allfittedxvalues = np.array(allfittedxvalues)
         allfittedyvalues = np.array(allfittedyvalues)
 
-        # Plot surface
+        # Create 3D figure
+        fig2 = plt.figure(figsize=(8, 6))
+        ax3 = fig2.add_subplot(111, projection='3d')
         surface = ax3.plot_surface(allfittedxvalues, allzvalues, allfittedyvalues, cmap='inferno')
-
-        # Add a color bar which maps values to colors
         fig2.colorbar(surface, ax=ax3, label='Intensity')
-
-        # Set labels and title
         ax3.set_xlabel('Beam #')
         ax3.set_ylabel('Ping #')
         ax3.set_zlabel('Intensity')
         ax3.set_title('Plume Strength')
         ax3.set_box_aspect([1, 1, 1])
+        fig2.savefig(os.path.join(save_path, f"{name_for}_{n}ppg_{h}bpg_3d_model.png"))
+        plt.close(fig2)
 
+        # Create 2D figure
+        fig3 = plt.figure(figsize=(8, 6))
+        ax4 = fig3.add_subplot()
         pcolor_plot = ax4.pcolor(allfittedxvalues, allzvalues, allfittedyvalues, cmap='inferno')
-        cbar = fig.colorbar(pcolor_plot, ax=ax4)
+        fig3.colorbar(pcolor_plot, ax=ax4)
         ax4.set_title('Plume Strength')
         ax4.set_ylabel('Ping #')
         ax4.set_xlabel('Beam #')
+        fig3.savefig(os.path.join(save_path, f"{name_for}_{n}ppg_{h}bpg_2d_model.png"))
+        plt.close(fig3)
 
-        # Show the plot
-        plt.show()
+
+    def create_3d_model_all(event):
+        start = time.time()
+        try:
+            print(f"Selected folder: {folder}")
+            kmwcd_files = [f for f in os.listdir(folder) if f.endswith(".kmwcd")]
+            n = len(kmwcd_files)
+
+            for i, filename in enumerate(kmwcd_files, 1):
+                file_path = os.path.join(folder, filename)
+                print(f"[{i}/{n}] Creating model for: {file_path}")
+
+                # Load data for this file
+                update_file(1, file_path)
+
+                # Create subfolder for output
+                base_name = os.path.splitext(filename)[0]
+                output_path = os.path.join(folder)
+                os.makedirs(output_path, exist_ok=True)
+
+                create_3d_model(output_path)
+
+            print(f"Models completed in {time.time() - start:.2f} seconds")
+
+        except Exception as e:
+            print(f"Failed to create models: {e}")
 
 
     def save_map(event):
@@ -566,7 +525,7 @@ def main():
     inset_ax.set_xticklabels([])
     inset_ax.set_yticklabels([])
 
-    inset_ax = plt.axes([0.055,0.035,0.37,0.17])
+    inset_ax = plt.axes([0.055,0.035,0.61,0.17])
     # inset_ax.axis('off')  # Hide the axes for the label
     inset_ax.set_facecolor('lightgrey')
     inset_ax.text(0.5, 0.5, '', horizontalalignment='center', verticalalignment='center', fontsize=12, bbox=dict(facecolor='white', alpha=0.8))
@@ -577,38 +536,38 @@ def main():
     inset_ax.set_yticklabels([])
 
     # Create sliders
-    ax_slider_a = plt.axes([0.1, 0.10, 0.23, 0.03], facecolor='lightgoldenrodyellow')
+    ax_slider_a = plt.axes([0.1, 0.10, 0.43, 0.03], facecolor='lightgoldenrodyellow')
     slider_a = RangeSlider(ax_slider_a, 'Depth', 1, mean_Sv.shape[0], valinit=(1, a_initial), valstep=1)
     slider_a.track.set_facecolor('white')
     slider_a.valtext.set_visible(False)
 
-    ax_slider_b = plt.axes([0.1, 0.05, 0.23, 0.03], facecolor='lightblue')
+    ax_slider_b = plt.axes([0.1, 0.05, 0.43, 0.03], facecolor='lightblue')
     slider_b = RangeSlider(ax_slider_b, 'Beams', 1, mean_Sv.shape[1], valinit=(1, b_initial), valstep=1)
     slider_b.track.set_facecolor('white')
     slider_b.valtext.set_visible(False)
 
-    ax_slider_c = plt.axes([0.1, 0.15, 0.23, 0.03], facecolor='purple')
+    ax_slider_c = plt.axes([0.1, 0.15, 0.43, 0.03], facecolor='purple')
     slider_c = RangeSlider(ax_slider_c, 'Pings', 1, max_pings, valinit=(1, c_initial), valstep=1)
     slider_c.track.set_facecolor('white')
     slider_c.valtext.set_visible(False)
 
     # Create text boxes
-    ax_textbox_a_start = plt.axes([0.34, 0.10, 0.03, 0.03])
+    ax_textbox_a_start = plt.axes([0.54, 0.10, 0.03, 0.03])
     textbox_a_start = TextBox(ax_textbox_a_start, '', initial=str(1))
 
-    ax_textbox_a_end = plt.axes([0.38, 0.10, 0.03, 0.03])
+    ax_textbox_a_end = plt.axes([0.58, 0.10, 0.03, 0.03])
     textbox_a_end = TextBox(ax_textbox_a_end, '', initial=str(a_initial))
 
-    ax_textbox_b_start = plt.axes([0.34, 0.05, 0.03, 0.03])
+    ax_textbox_b_start = plt.axes([0.54, 0.05, 0.03, 0.03])
     textbox_b_start = TextBox(ax_textbox_b_start, '', initial=str(1))
 
-    ax_textbox_b_end = plt.axes([0.38, 0.05, 0.03, 0.03])
+    ax_textbox_b_end = plt.axes([0.58, 0.05, 0.03, 0.03])
     textbox_b_end = TextBox(ax_textbox_b_end, '', initial=str(b_initial))
 
-    ax_textbox_c_start = plt.axes([0.34, 0.15, 0.03, 0.03])
+    ax_textbox_c_start = plt.axes([0.54, 0.15, 0.03, 0.03])
     textbox_c_start = TextBox(ax_textbox_c_start, '', initial=str(1))
 
-    ax_textbox_c_end = plt.axes([0.38, 0.15, 0.03, 0.03])
+    ax_textbox_c_end = plt.axes([0.58, 0.15, 0.03, 0.03])
     textbox_c_end = TextBox(ax_textbox_c_end, '', initial=str(c_initial))
 
     ax_textbox_d = plt.axes([0.73,0.64,0.03,0.03])
@@ -625,32 +584,35 @@ def main():
     ax_label.axis('off')  # Hide the axes for the label
     ax_label.text(0, 0.5, 'frames per second', verticalalignment='center')
 
-    ax_textbox_f = plt.axes([0.73,0.50,0.03,0.03])
+    ax_textbox_f = plt.axes([0.73,0.41,0.03,0.03])
     textbox_f = TextBox(ax_textbox_f, '', initial=str(10))
 
-    ax_label = plt.axes([0.765,0.50,0.03,0.03])
+    ax_label = plt.axes([0.765,0.41,0.03,0.03])
     ax_label.axis('off')  # Hide the axes for the label
     ax_label.text(0, 0.5, 'pings per gridpoint', verticalalignment='center')
 
-    ax_textbox_g = plt.axes([0.73,0.45,0.03,0.03])
+    ax_textbox_g = plt.axes([0.73,0.36,0.03,0.03])
     textbox_g = TextBox(ax_textbox_g, '', initial=str(10))
 
-    ax_label = plt.axes([0.765,0.45,0.03,0.03])
+    ax_label = plt.axes([0.765,0.36,0.03,0.03])
     ax_label.axis('off')  # Hide the axes for the label
     ax_label.text(0, 0.5, 'beams per gridpoint', verticalalignment='center')
 
     # Create buttons
-    ax_label = plt.axes([0.83,0.68,0.03,0.03])
+    ax_label = plt.axes([0.82,0.68,0.03,0.03])
     ax_label.axis('off')  # Hide the axes for the label
-    ax_label.text(0, 0.5, 'Animation', verticalalignment='center')
+    ax_label.text(0, 0.5, 'Animation', verticalalignment='center', fontweight='bold')
 
-    ax_button = plt.axes([0.86,0.64,0.11,0.03])
+    ax_button = plt.axes([0.73,0.54,0.24,0.028])
     button = Button(ax_button, 'Animate')
 
-    ax_button = plt.axes([0.86,0.59,0.11,0.03])
+    ax_button = plt.axes([0.73,0.50,0.24,0.028])
     button_animate_all = Button(ax_button, 'Animate All')
 
-    ax_button_quit = plt.axes([0.78,0.045,0.15,0.03])
+    ax_button = plt.axes([0.62,0.05,0.04,0.13])
+    button_run = Button(ax_button, 'Run')
+
+    ax_button_quit = plt.axes([0.73,0.045,0.24,0.028])
     button_quit = Button(ax_button_quit, 'Quit')
     
     ax_button_file = plt.axes([0.73,0.872,0.24,0.028])
@@ -670,18 +632,21 @@ def main():
     except:
         folder_label = ax_label.text(0, 0.5, 'Selected folder: None', verticalalignment='center')
 
-    ax_label = plt.axes([0.83,0.53,0.03,0.03])
+    ax_label = plt.axes([0.82,0.45,0.03,0.03])
     ax_label.axis('off')  # Hide the axes for the label
-    ax_label.text(0, 0.5, 'Modeling', verticalalignment='center')
+    ax_label.text(0, 0.41, 'Modeling', verticalalignment='center', fontweight='bold')
 
-    ax_3d_model = plt.axes([0.73,0.40,0.24,0.028])
+    ax_3d_model = plt.axes([0.73,0.31,0.24,0.028])
     button_3d_model = Button(ax_3d_model, 'Create Model')
 
-    ax_save_map = plt.axes([0.49,0.12,0.16,0.028])
+    ax_3d_model = plt.axes([0.73,0.27,0.24,0.028])
+    button_3d_model_all = Button(ax_3d_model, 'Create All Models')
+
+    ax_save_map = plt.axes([0.73,0.10,0.24,0.028])
     button_save_map = Button(ax_save_map, 'Save Map')
 
-    ax_save_averages = plt.axes([0.49,0.08,0.16,0.028])
-    button_save_averages = Button(ax_save_averages, 'Save Plot')
+    # ax_save_averages = plt.axes([0.78,0.10,0.16,0.028])
+    # button_save_averages = Button(ax_save_averages, 'Save Plot')
 
     # Update text boxes when sliders change
     def update_textbox_from_slider(val, slider):
@@ -704,9 +669,9 @@ def main():
     slider_b.on_changed(lambda event: update_textbox_from_slider(event, slider='b'))
     slider_c.on_changed(lambda event: update_textbox_from_slider(event, slider='c'))
 
-    slider_a.on_changed(update_data)
-    slider_b.on_changed(update_data)
-    slider_c.on_changed(update_data)
+    # slider_a.on_changed(update_data)
+    # slider_b.on_changed(update_data)
+    # slider_c.on_changed(update_data)
 
     textbox_a_start.on_submit(lambda event: update_slider_from_textbox(event, slider='a'))
     textbox_a_end.on_submit(lambda event: update_slider_from_textbox(event, slider='a'))
@@ -716,14 +681,16 @@ def main():
     textbox_c_end.on_submit(lambda event: update_slider_from_textbox(event, slider='c'))
 
     button.on_clicked(create_animation)
+    button_run.on_clicked(update_data)
     button_quit.on_clicked(quit)
     button_file.on_clicked(lambda event: update_file(event, file=None))
     button_folder.on_clicked(load_folder)
     button_animate_all.on_clicked(create_all_animations)
     button_3d_model.on_clicked(create_3d_model)
+    button_3d_model_all.on_clicked(create_3d_model_all)
     # button_save_averages()
     button_save_map.on_clicked(save_map)
-    button_save_averages.on_clicked(save_averages)
+    # button_save_averages.on_clicked(save_averages)
 
     plt.show()
 
